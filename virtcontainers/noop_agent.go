@@ -64,12 +64,12 @@ func (n *noopAgent) createContainer(sandbox *Sandbox, c *Container) (*Process, e
 	return &Process{}, nil
 }
 
-func (n *noopAgent) prepareContainerFC(sandbox *Sandbox, c *Container) error {
-	return nil
+func (n *noopAgent) prepareContainerFC(sandbox *Sandbox, c *Container) (*Process, error) {
+	return &Process{}, nil
 }
 
-func (n *noopAgent) createContainerFC(sandbox *Sandbox, c *Container) (*Process, error) {
-	return &Process{}, nil
+func (n *noopAgent) createContainerFC(sandbox *Sandbox, c *Container) error {
+	return nil
 }
 
 // startContainer is the Noop agent Container starting implementation. It does nothing.

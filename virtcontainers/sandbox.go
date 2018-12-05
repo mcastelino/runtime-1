@@ -1556,11 +1556,10 @@ func (s *Sandbox) Start() error {
 
 		// Create the actual workload inside the guest
 		for _, c := range s.containers {
-			process, err := s.agent.createContainerFC(s, c)
+			err := s.agent.createContainerFC(s, c)
 			if err != nil {
 				return err
 			}
-			c.process = *process
 		}
 	}
 

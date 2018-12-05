@@ -601,11 +601,11 @@ func (h *hyper) createContainer(sandbox *Sandbox, c *Container) (*Process, error
 		h.state.URL, c.config.Cmd, createNSList, enterNSList)
 }
 
-func (h *hyper) prepareContainerFC(sandbox *Sandbox, c *Container) (err error) {
-	return nil
-}
-func (h *hyper) createContainerFC(sandbox *Sandbox, c *Container) (p *Process, err error) {
+func (h *hyper) prepareContainerFC(sandbox *Sandbox, c *Container) (p *Process, err error) {
 	return &Process{}, nil
+}
+func (h *hyper) createContainerFC(sandbox *Sandbox, c *Container) (err error) {
+	return nil
 }
 
 // startContainer is the agent Container starting implementation for hyperstart.

@@ -772,11 +772,11 @@ func createContainer(sandbox *Sandbox, contConfig ContainerConfig) (c *Container
 		}
 		c.process = *process
 	} else {
-		err := sandbox.agent.prepareContainerFC(c.sandbox, c)
+		process, err := sandbox.agent.prepareContainerFC(c.sandbox, c)
 		if err != nil {
 			return nil, err
 		}
-		//TODO: c.process = process-of-firecracker?
+		c.process = *process
 	}
 
 	// If this is a sandbox container, store the pid for sandbox
