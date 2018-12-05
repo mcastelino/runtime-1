@@ -275,8 +275,19 @@ func (k *kataAgent) configure(h hypervisor, id, sharePath string, builtin bool, 
 func (k *kataAgent) createSandbox(sandbox *Sandbox) error {
 	span, _ := k.trace("createSandbox")
 	defer span.Finish()
+	if err := k.configure(sandbox.hypervisor, sandbox.id, k.getSharePath(sandbox.id), k.proxyBuiltIn, nil); err != nil {
+		return err
+	}
 
-	return k.configure(sandbox.hypervisor, sandbox.id, k.getSharePath(sandbox.id), k.proxyBuiltIn, nil)
+	//At this point we have the relevant information for agent connectivity - store it to disk
+	// major hack: I am assuming vsock here, which isn't necessarily the case. We'd need to
+	// execute this in agent's startSandbox flow after creating proxy in the no-vsock scenario.
+	k.state.URL, _ = k.getAgentURL()
+	if err := sandbox.storage.storeAgentState(sandbox.id, k.state); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func cmdToKataProcess(cmd Cmd) (process *grpc.Process, err error) {
@@ -482,6 +493,10 @@ func (k *kataAgent) startProxy(sandbox *Sandbox) error {
 		return nil
 	}
 
+	if err := sandbox.storage.fetchAgentState(sandbox.id, &k.state); err != nil {
+		k.Logger().Debug("start proxy: could not retrieve agent state from storage")
+	}
+
 	if k.state.URL != "" {
 		k.Logger().WithFields(logrus.Fields{
 			"sandbox":   sandbox.id,
@@ -544,6 +559,15 @@ func (k *kataAgent) getAgentURL() (string, error) {
 }
 
 func (k *kataAgent) setProxy(sandbox *Sandbox, proxy proxy, pid int, url string) error {
+	span, _ := k.trace("setProxy")
+	defer span.Finish()
+
+	//
+	// I *think* this function well effectively be a noop, since the actual store call
+	// will return since the state has already been stored. In case of non-vsock, we'll
+	// run into issues here.
+	//
+
 	if url == "" {
 		var err error
 		if url, err = k.agentURL(); err != nil {
