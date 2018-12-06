@@ -839,6 +839,7 @@ func (k *kataAgent) handleShm(grpcSpec *grpc.Spec, sandbox *Sandbox) {
 func (k *kataAgent) appendDevices(deviceList []*grpc.Device, c *Container) []*grpc.Device {
 	for _, dev := range c.devices {
 		device := c.sandbox.devManager.GetDeviceByID(dev.ID)
+
 		if device == nil {
 			k.Logger().WithField("device", dev.ID).Error("failed to find device by id")
 			return nil
@@ -861,6 +862,7 @@ func (k *kataAgent) appendDevices(deviceList []*grpc.Device, c *Container) []*gr
 		if d.VirtPath != "" {
 			kataDevice.Type = kataMmioBlkDevType
 			kataDevice.Id = d.VirtPath
+			kataDevice.VmPath = d.VirtPath
 		} else if d.SCSIAddr == "" {
 			kataDevice.Type = kataBlkDevType
 			kataDevice.Id = d.PCIAddr
@@ -918,7 +920,7 @@ func (k *kataAgent) buildContainerRootfs(sandbox *Sandbox, c *Container, rootPat
 
 		if sandbox.config.HypervisorConfig.BlockDeviceDriver == VirtioMmio {
 			rootfs.Driver = kataMmioBlkDevType
-			rootfs.Source = blockDrive.MmioAddr
+			rootfs.Source = blockDrive.VirtPath
 		} else if sandbox.config.HypervisorConfig.BlockDeviceDriver == VirtioBlock {
 			rootfs.Driver = kataBlkDevType
 			rootfs.Source = blockDrive.PCIAddr
