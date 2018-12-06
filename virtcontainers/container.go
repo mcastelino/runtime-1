@@ -731,8 +731,10 @@ func createContainer(sandbox *Sandbox, contConfig ContainerConfig) (c *Container
 				return
 			}
 		} else {
-			//coldplug path for block.
-			if err = c.coldplugDrive(); err != nil {
+			//HACK - until we can impl a cold plug path within the device
+			//manager code base, let's use hotplugDrive and add a hotplug
+			//handling function to he FC hypervisor code
+			if err = c.hotplugDrive(); err != nil {
 				return
 			}
 		}

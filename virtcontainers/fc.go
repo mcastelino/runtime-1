@@ -70,7 +70,7 @@ func (s *firecrackerState) set(state vmmState) {
 
 // firecracker is an Hypervisor interface implementation for the firecracker hypervisor.
 type firecracker struct {
-	id string
+	id    string
 	state firecrackerState
 
 	firecrackerd *exec.Cmd           //Tracks the firecracker process itself
@@ -87,7 +87,7 @@ type firecracker struct {
 }
 
 type firecrackerDevice struct {
-	dev interface{}
+	dev     interface{}
 	devType deviceType
 }
 
@@ -465,7 +465,7 @@ func (fc *firecracker) addDevice(devInfo interface{}, devType deviceType) error 
 
 	if fc.state.state == notReady {
 		dev := firecrackerDevice{
-			dev: devInfo,
+			dev:     devInfo,
 			devType: devType,
 		}
 		fc.Logger().Warn("FC not ready, queueing device")
@@ -473,6 +473,7 @@ func (fc *firecracker) addDevice(devInfo interface{}, devType deviceType) error 
 		return nil
 	}
 
+	fc.Logger().Info("adding a device")
 	switch v := devInfo.(type) {
 	case Endpoint:
 		fc.Logger().Info("Adding net device")
@@ -484,6 +485,7 @@ func (fc *firecracker) addDevice(devInfo interface{}, devType deviceType) error 
 		fc.Logger().Info("Adding vsock")
 		return fc.fcAddVsock(v)
 	default:
+		fc.Logger().Warning("unknown device")
 		break
 	}
 
@@ -492,7 +494,19 @@ func (fc *firecracker) addDevice(devInfo interface{}, devType deviceType) error 
 
 // hotplugAddDevice not supported in Firecracker VMM
 func (fc *firecracker) hotplugAddDevice(devInfo interface{}, devType deviceType) (interface{}, error) {
-	return nil, fmt.Errorf("firecracker does not support device hotplug")
+	span, _ := fc.trace("hotplugAddDevice")
+	defer span.Finish()
+
+	switch devType {
+	case blockDev:
+		return nil, fc.fcAddBlockDrive(*devInfo.(*config.BlockDrive))
+	default:
+		fc.Logger().WithField("devInfo", devInfo).Warn("hotplugAddDevce: unknown device")
+		fc.Logger().WithField("devType:", devType).Warn("hotplugAddDevce: unknown device")
+		break
+	}
+
+	return nil, nil
 }
 
 // hotplugRemoveDevice not supported in Firecracker VMM
