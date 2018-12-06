@@ -255,6 +255,8 @@ func (k *kataAgent) configure(h hypervisor, id, sharePath string, builtin bool, 
 
 	caps := h.capabilities()
 	if caps.is9pSupported() {
+
+		k.Logger().Debug("9p is supported")
 		// Adding the shared volume.
 		// This volume contains all bind mounted container bundles.
 		sharedVolume := Volume{
@@ -267,8 +269,9 @@ func (k *kataAgent) configure(h hypervisor, id, sharePath string, builtin bool, 
 		}
 
 		return h.addDevice(sharedVolume, fsDev)
+	} else {
+		k.Logger().Debug("9p is NOT supported")
 	}
-
 	return nil
 }
 
@@ -885,6 +888,9 @@ func (k *kataAgent) rollbackFailingContainerCreation(c *Container) {
 }
 
 func (k *kataAgent) buildContainerRootfs(sandbox *Sandbox, c *Container, rootPathParent string) (*grpc.Storage, error) {
+	span, _ := k.trace("buildContainerRootfs")
+	defer span.Finish()
+
 	if c.state.Fstype != "" && c.state.BlockDeviceID != "" {
 		// The rootfs storage volume represents the container rootfs
 		// mount point inside the guest.
@@ -1027,7 +1033,7 @@ func (k *kataAgent) createContainer(sandbox *Sandbox, c *Container) (p *Process,
 	k.handleShm(grpcSpec, sandbox)
 
 	caps := sandbox.hypervisor.capabilities()
-	if caps.is9pSupported() {
+	if !caps.is9pSupported() {
 		// 9p is not supported, upload files.
 		k.Logger().Debugf("createContainer: upload files")
 		for _, nm := range newMounts {

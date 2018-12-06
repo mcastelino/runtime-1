@@ -438,6 +438,10 @@ func (c *Container) createContainersDirs() error {
 // container mounts to the storage. This way, we will have the HostPath info
 // available when we will need to unmount those mounts.
 func (c *Container) mountSharedDirMounts(hostSharedDir, guestSharedDir string) ([]Mount, error) {
+	var span opentracing.Span
+	span, c.ctx = c.trace("mountSharedDirMounts")
+	defer span.Finish()
+
 	var sharedDirMounts []Mount
 	for idx, m := range c.mounts {
 		if isSystemMount(m.Destination) || m.Type != "bind" {
