@@ -855,7 +855,10 @@ func (k *kataAgent) appendDevices(deviceList []*grpc.Device, c *Container) []*gr
 			ContainerPath: dev.ContainerPath,
 		}
 
-		if d.SCSIAddr == "" {
+		if d.VirtPath != "" {
+			kataDevice.Type = kataMmioBlkDevType
+			kataDevice.Id = d.VirtPath
+		} else if d.SCSIAddr == "" {
 			kataDevice.Type = kataBlkDevType
 			kataDevice.Id = d.PCIAddr
 		} else {
@@ -1277,6 +1280,9 @@ func (k *kataAgent) handleBlockVolumes(c *Container) []*grpc.Storage {
 		if c.sandbox.config.HypervisorConfig.BlockDeviceDriver == VirtioBlock {
 			vol.Driver = kataBlkDevType
 			vol.Source = blockDrive.PCIAddr
+		} else if c.sandbox.config.HypervisorConfig.BlockDeviceDriver == VirtioMmio {
+			vol.Driver = kataMmioBlkDevType
+			vol.Source = blockDrive.VirtPath
 		} else {
 			vol.Driver = kataSCSIDevType
 			vol.Source = blockDrive.SCSIAddr
