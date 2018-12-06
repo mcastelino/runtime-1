@@ -1213,6 +1213,34 @@ func (k *kataAgent) createContainerFC(sandbox *Sandbox, c *Container) (err error
 
 	k.handleShm(grpcSpec, sandbox)
 
+	caps := sandbox.hypervisor.capabilities()
+	if !caps.is9pSupported() {
+		// 9p is not supported, upload files.
+		k.Logger().Debugf("createContainerFC: upload files")
+		for _, nm := range newMounts {
+			for _, m := range c.mounts {
+				if nm.Destination != m.Destination {
+					continue
+				}
+
+				b, err := ioutil.ReadFile(m.HostPath)
+				if err != nil {
+					k.Logger().WithError(err).WithField("path", m.HostPath).Error("Could not read file")
+					continue
+				}
+
+				upReq := &grpc.UploadFileRequest{
+					Content: string(b),
+					Path:    nm.Source,
+				}
+
+				if _, err = k.sendReq(upReq); err != nil {
+					k.Logger().WithError(err).Error("Could not send request")
+				}
+			}
+		}
+	}
+
 	req := &grpc.CreateContainerRequest{
 		ContainerId:  c.id,
 		ExecId:       c.id,
