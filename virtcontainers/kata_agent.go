@@ -58,6 +58,7 @@ var (
 	// CAP_NET_BIND_SERVICE capability may bind to these port numbers.
 	vSockPort            = 1024
 	kata9pDevType        = "9p"
+	kataMmioBlkDevType   = "mmioblk"
 	kataBlkDevType       = "blk"
 	kataSCSIDevType      = "scsi"
 	sharedDir9pOptions   = []string{"trans=virtio,version=9p2000.L,cache=mmap", "nodev"}
@@ -906,7 +907,10 @@ func (k *kataAgent) buildContainerRootfs(sandbox *Sandbox, c *Container, rootPat
 			return nil, fmt.Errorf("malformed block drive")
 		}
 
-		if sandbox.config.HypervisorConfig.BlockDeviceDriver == VirtioBlock {
+		if sandbox.config.HypervisorConfig.BlockDeviceDriver == VirtioMmio {
+			rootfs.Driver = kataMmioBlkDevType
+			rootfs.Source = blockDrive.MmioAddr
+		} else if sandbox.config.HypervisorConfig.BlockDeviceDriver == VirtioBlock {
 			rootfs.Driver = kataBlkDevType
 			rootfs.Source = blockDrive.PCIAddr
 		} else {
