@@ -409,14 +409,19 @@ func (fc *firecracker) fcAddNetDevice(endpoint Endpoint) error {
 	span, _ := fc.trace("fcAddNetDevice")
 	defer span.Finish()
 
+	//TODO: Get the name of the tap device from the endpoint pair
+	hackedName := "tap0_kata"
+
 	cfg := ops.NewPutGuestNetworkInterfaceByIDParams()
-	ifaceID := endpoint.Name()
+	//ifaceID := endpoint.Name()
+	ifaceID := hackedName
 	ifaceCfg := &models.NetworkInterface{
 		AllowMmdsRequests: false,
 		GuestMac:          endpoint.HardwareAddr(),
-		IfaceID:           &ifaceID,
-		HostDevName:       endpoint.Name(),
-		State:             "Attached",
+		//IfaceID:           &ifaceID,
+		IfaceID:     &hackedName,
+		HostDevName: hackedName, //,endpoint.Name(),
+		State:       "Attached",
 	}
 	cfg.SetBody(ifaceCfg)
 	cfg.SetIfaceID(ifaceID)

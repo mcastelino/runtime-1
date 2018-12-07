@@ -410,8 +410,9 @@ func createLink(netHandle *netlink.Handle, name string, expectedLink netlink.Lin
 		newLink = &netlink.Tuntap{
 			LinkAttrs: netlink.LinkAttrs{Name: name},
 			Mode:      netlink.TUNTAP_MODE_TAP,
-			Queues:    numCPUs,
-			Flags:     netlink.TUNTAP_MULTI_QUEUE_DEFAULTS | netlink.TUNTAP_VNET_HDR,
+			Flags:     netlink.TUNTAP_VNET_HDR,
+			//Queues:    numCPUs,
+			//Flags:     netlink.TUNTAP_MULTI_QUEUE_DEFAULTS | netlink.TUNTAP_VNET_HDR,
 		}
 	case (&netlink.Macvtap{}).Type():
 		qlen := expectedLink.Attrs().TxQLen
