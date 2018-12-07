@@ -459,6 +459,40 @@ func (fc *firecracker) fcAddBlockDrive(drive config.BlockDrive) error {
 	return nil
 }
 
+// Firecracker supports replacing the host drive used once the has booted up
+func (fc *firecracker) fcUpdateBlockDrive(drive config.BlockDrive) error {
+	span, _ := fc.trace("fcUpdateBlockDrive")
+	defer span.Finish()
+
+	driveID := drive.ID
+	driveParams := ops.NewPatchGuestDriveByIDParams()
+	driveParams.SetDriveID(driveID)
+
+	driveFc := &models.PartialDrive{
+		DriveID:    &driveID,
+		PathOnHost: &drive.File, //This is the only property that can be modified
+	}
+	driveParams.SetBody(driveFc)
+	_, err := fc.client.Operations.PatchGuestDriveByID(driveParams)
+	if err != nil {
+		fc.Logger().WithField("fcUpdateBlockDrive failed:", err).Debug()
+		return err
+	}
+
+	actionParams := ops.NewCreateSyncActionParams()
+	actionInfo := &models.InstanceActionInfo{
+		ActionType: "BlockDeviceRescan",
+	}
+	actionParams.SetInfo(actionInfo)
+	_, err = fc.client.Operations.CreateSyncAction(actionParams)
+	if err != nil {
+		fc.Logger().WithField("fcUpdateBlockDrive BlockDeviceRescan failed:", err).Debug()
+		return err
+	}
+
+	return nil
+}
+
 // addDevice will add extra devices to firecracker.  Limited to configure before the
 // virtual machine starts.  Devices include drivers and network interfaces only.
 func (fc *firecracker) addDevice(devInfo interface{}, devType deviceType) error {
